@@ -82,6 +82,7 @@ void mylist::insertbefore(listnode *ptr, const string &s, const int & c)
   t->prev = ptr->prev;  // new node's prev should be the node before ptr
   ptr->prev->next = t;  // the node before ptr's next points to the new node
   ptr->prev = t;        // ptr's prev points to the new node
+  size++; 
 
 }
 
@@ -91,10 +92,19 @@ void mylist::insertbefore(listnode *ptr, const string &s, const int & c)
 // You need to deal with the cases when the list is empty
 // or not empty. head needs to point to be newly inserted item.
 //
-void mylist::insertfront(const string &s, const int & c)
+void mylist::insertfront(const string &s, const int & c) // my part
 {
-  // change me, your code here
-  cout << "insertfront is not supported.\n";
+  listnode *t = new listnode(s , c);
+  if(head == NULL){
+    head = t;
+    tail = t;
+    size++;
+  } else {
+    t->next = head;
+    head->prev = t;
+    head = t;
+    size++;
+  }
 }
 
 
@@ -102,10 +112,20 @@ void mylist::insertfront(const string &s, const int & c)
 // Insert to an item (s, c) after the item pointed to by ptr
 // ptr cannot be NULL
 //
-void mylist::insertafter(listnode *ptr, const string &s, const int & c)
+void mylist::insertafter(listnode *ptr, const string &s, const int & c) // my part
 {
-  // change me, your code here
-  cout << "insertafter is not supported.\n";
+  if (ptr == NULL) {
+    cout << "insertbefore: can't insert before a NULL pointer.\n";
+  } else if (ptr == tail){
+    insertback(s , c);
+  } else {
+    listnode *t = new listnode(s , c);
+    t->prev = ptr;
+    t->next = ptr->next;
+    ptr->next->prev = t;
+    ptr->next = t;
+    size++;
+  }
 }
 
 //
@@ -113,10 +133,29 @@ void mylist::insertafter(listnode *ptr, const string &s, const int & c)
 // This function must be implemented from scratch, no routine can be called
 // inside this function.
 //
-void mylist::insertpos(const int &pos, const string &s, const int & c)
+void mylist::insertpos(const int &pos, const string &s, const int & c) // my part
 {
-  // change me, your code here
-  cout << "insertpos is not supported.\n";
+  if(pos >= size){
+    cout << "out of size.\n";
+  } else if(pos == 0){
+    listnode *t = new listnode(s , c);
+    t->next = head;
+    head->prev = t;
+    head = t;
+    size++;
+  } else{
+    listnode *position = head;
+    for(int i = 0 ; i < pos ; i++){
+      position = position->next;
+    }
+    listnode *t = new listnode(s , c);
+    t->next = position;
+    position->prev->next = t;
+    t->prev = position->prev;
+    position->prev = t;
+    size++;
+  }
+
 }
 
 //
@@ -141,11 +180,27 @@ void mylist::print()
 // 
 // copy constructor, must make a deep copy
 //
-mylist::mylist(const mylist &l)
+mylist::mylist(const mylist &l) // my part
 {
-  // change me, your code here
-  cout << "copy constructor is not supported.\n";
-  size =0; head=NULL; tail = NULL;
+  if(l.size == 0){
+    size =0; 
+    head=NULL; 
+    tail = NULL;
+  } else {
+    head = new listnode(l.head->s , l.head->count);
+    size = l.size;
+    listnode *next = l.head->next;
+    listnode *forward = head;
+    listnode *back = head;
+    while(next != NULL){
+      forward->next = new listnode(next->s , next->count);
+      forward = forward->next;
+      forward->prev = back;
+      back = back->next;
+      next = next->next;
+    }
+    tail = back;
+  }
 }
  
 //
@@ -153,11 +208,27 @@ mylist::mylist(const mylist &l)
 // must release the memory for old list if necessary and make a deep
 // copy.
 //
-mylist & mylist::operator=(const mylist &l)
+mylist & mylist::operator=(const mylist &l) // my part
 {
-  // change me, your code here
-  cout << "= operator is not supported.\n";
-  size =0; head=NULL; tail = NULL;
+  if(l.size == 0){
+    size =0; 
+    head=NULL; 
+    tail = NULL;
+  } else {
+    head = new listnode(l.head->s , l.head->count);
+    size = l.size;
+    listnode *next = l.head->next;
+    listnode *forward = head;
+    listnode *back = head;
+    while(next != NULL){
+      forward->next = new listnode(next->s , next->count);
+      forward = forward->next;
+      forward->prev = back;
+      back = back->next;
+      next = next->next;
+    }
+    tail = back;
+  }
   return *this;
 }
 
@@ -193,10 +264,23 @@ void mylist::removefront()
 // if the list becomes empty, head, tail, and size must be set to
 // the state of an empty list.
 //
-void mylist::removeback()
+void mylist::removeback() // my Part
 {
-  // change me, your code here
-  cout << "removeback is not supported.\n";
+  if(tail == NULL){
+    cout << "removefront: Can't remove from an empty list.\n";
+    exit(0);
+  }
+  if(head == tail){
+    delete head;
+    head = tail = NULL;
+    size = 0;
+  } else {
+    listnode *t = tail;
+    tail = tail->prev;
+    tail->next = NULL;
+    delete t;
+    size--;
+  }
 }
 
 //
@@ -204,15 +288,28 @@ void mylist::removeback()
 // if the list becomes empty, head, tail, and size must be set to
 // the state of an empty list.
 //
-void mylist::remove(listnode *ptr)
+void mylist::remove(listnode *ptr) // my part
 {
   if (ptr == NULL) {
     cout << "Remove: can't remove an NULL pointer.\n";
     exit(0);
   }
-
-  // change me, your code here, we discuss the operation in the lecture
-  cout << "remove is not supported.\n";
+  if(ptr == head){
+    removefront();
+  } else if(ptr == tail){
+    removeback();
+  } else{
+    listnode *t = head;
+    while(t != NULL){
+      if(t = ptr){
+        t->prev->next = t->next;
+        delete t;
+        size--;
+        break;
+      }
+      t = t->next;
+    }
+  }
 }
 
 //
@@ -220,11 +317,30 @@ void mylist::remove(listnode *ptr)
 // if pos is larger than the length of the list, do nothing.
 // this routine cannot call any other subroutines
 //
-void mylist::removepos(const int & pos)
+void mylist::removepos(const int & pos) // my part
 {
-  // change me, your code here, we discuss the operation in the lecture
-  cout << "removepos is not supported.\n";
-
+  if(pos == 0){
+    listnode *t = head->next;
+    delete head;
+    head = t;
+    head->prev = NULL;
+    size--;
+  } else if(pos == size - 1){
+    listnode * t = tail->prev;
+    t->next = NULL;
+    delete tail;
+    tail = t;
+    size--;
+  } else if(pos < size - 1 && pos > 0){
+    listnode * t = head;
+    for(int i = 0 ; i < pos ; i++){
+      t = t->next;
+    }
+    t->prev->next = t->next;
+    t->next->prev = t->prev;
+    delete t;
+    size--;
+  }
 }
 
 //
@@ -252,12 +368,13 @@ listnode mylist::front() const
 //
 // return the last node in the list
 //
-listnode mylist::back() const
+listnode mylist::back() const // my part
 {
-  // change me, your code here.
-  cout << "back is not supported.\n";
-  return listnode();
-
+  if (tail == NULL) {
+    cout << "back: can't get back from an empty list.\n";
+    exit(0);
+  }
+  return listnode(tail->s, tail->count);
 }
 
 //
@@ -280,21 +397,48 @@ listnode *mylist::search(const string &s)
 // largest count value, the one occurs the earlist (closest to the front)
 //  should be returned.
 //
-listnode *mylist::findmaxcount()
+listnode *mylist::findmaxcount() // my part
 {
-  // change me, your code here.
-  cout << "findmaxcount is not supported.\n";
-  return NULL;
+  if(size == 0){
+    return NULL;
+  } else if(head == tail){
+    return head;
+  } else{
+    listnode *maxcount = head;
+    listnode *t = head;
+    while(t != NULL){
+      if(t->count > maxcount->count){
+        maxcount = t;
+      }
+      t = t->next;
+    }
+    return maxcount;
+  }
   
 }
 
 //
 // remove the node with the largest count from the list
 //
-void mylist::removemaxcount()
+void mylist::removemaxcount() // my part
 {
-  // change me, your code here. just call findmaxcount() and then remove()
-  cout << "removemaxcount is not supported.\n";
+  if(size == 0){
+    return;
+  } else if(head == tail){
+    delete head;
+    head = tail = NULL;
+    size = 0;
+  } else {
+    listnode *maxcount = head;
+    listnode *t = head;
+    while(t != NULL){
+      if(t->count > maxcount->count){
+        maxcount = t;
+      }
+      t = t->next;
+    }
+    remove(maxcount);
+  }
 }
 
 //
@@ -302,9 +446,15 @@ void mylist::removemaxcount()
 // if yes, increment its count by 1 and return true
 // if not, return false.
 //
-bool mylist::searchandinc(const string &s)
+bool mylist::searchandinc(const string &s) // my part
 {
-  // change me, your code here. just call search and then update the count
-  cout << "searchandinc is not supported.\n";
-  return true;
+  listnode *t = head;
+  while(t != NULL){
+    if(t->s == s){
+      t->count++;
+      return true;
+    }
+    t = t->next;
+  }
+  return false;
 }
