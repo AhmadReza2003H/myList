@@ -65,8 +65,7 @@ void mylist::insertback(const string &s, const int & c)
 void mylist::insertbefore(listnode *ptr, const string &s, const int & c)
 {
   if (ptr == NULL) {
-    cout << "insertbefore: can't insert before a NULL pointer.\n";
-    exit(0);
+    throw "insertbefore: can't insert before a NULL pointer.";
   }
 
   // special case: insert before the head
@@ -94,17 +93,7 @@ void mylist::insertbefore(listnode *ptr, const string &s, const int & c)
 //
 void mylist::insertfront(const string &s, const int & c) // my part
 {
-  listnode *t = new listnode(s , c);
-  if(head == NULL){
-    head = t;
-    tail = t;
-    size++;
-  } else {
-    t->next = head;
-    head->prev = t;
-    head = t;
-    size++;
-  }
+  this->insertpos(0 , s , c);
 }
 
 
@@ -135,15 +124,19 @@ void mylist::insertafter(listnode *ptr, const string &s, const int & c) // my pa
 //
 void mylist::insertpos(const int &pos, const string &s, const int & c) // my part
 {
-  if(pos >= size){
-    cout << "out of size.\n";
+  if(size != 0 && pos >= size){
+    throw "out of size.";
   } else if(pos == 0){
-    listnode *t = new listnode(s , c);
-    t->next = head;
-    head->prev = t;
-    head = t;
-    size++;
-  } else{
+    if(size == 0){
+      head = new listnode(s  , c);
+      tail = head;
+    } else{
+      listnode *t = new listnode(s , c);
+      t->next = head;
+      head->prev = t;
+      head = t;
+    }
+  } else {
     listnode *position = head;
     for(int i = 0 ; i < pos ; i++){
       position = position->next;
@@ -153,9 +146,8 @@ void mylist::insertpos(const int &pos, const string &s, const int & c) // my par
     position->prev->next = t;
     t->prev = position->prev;
     position->prev = t;
-    size++;
   }
-
+  size++;
 }
 
 //
@@ -182,25 +174,8 @@ void mylist::print()
 //
 mylist::mylist(const mylist &l) // my part
 {
-  if(l.size == 0){
-    size =0; 
-    head=NULL; 
-    tail = NULL;
-  } else {
-    head = new listnode(l.head->s , l.head->count);
-    size = l.size;
-    listnode *next = l.head->next;
-    listnode *forward = head;
-    listnode *back = head;
-    while(next != NULL){
-      forward->next = new listnode(next->s , next->count);
-      forward = forward->next;
-      forward->prev = back;
-      back = back->next;
-      next = next->next;
-    }
-    tail = back;
-  }
+  head = tail = NULL;
+  *this = l;
 }
  
 //
@@ -210,24 +185,18 @@ mylist::mylist(const mylist &l) // my part
 //
 mylist & mylist::operator=(const mylist &l) // my part
 {
-  if(l.size == 0){
-    size =0; 
-    head=NULL; 
-    tail = NULL;
-  } else {
-    head = new listnode(l.head->s , l.head->count);
-    size = l.size;
-    listnode *next = l.head->next;
-    listnode *forward = head;
-    listnode *back = head;
-    while(next != NULL){
-      forward->next = new listnode(next->s , next->count);
-      forward = forward->next;
-      forward->prev = back;
-      back = back->next;
-      next = next->next;
-    }
-    tail = back;
+  listnode *t = head;
+  while(t != NULL){
+    t->prev = t;
+    t = t->next;
+    delete t->prev;
+  }
+  head = tail = NULL;
+  listnode* forward = l.head;
+  size = 0;
+  while(forward != NULL){
+    insertback(forward->s , forward->count);
+    forward = forward->next;
   }
   return *this;
 }
@@ -241,8 +210,7 @@ mylist & mylist::operator=(const mylist &l) // my part
 void mylist::removefront()
 {
   if (head == NULL) {
-    cout << "removefront: Can't remove from an empty list.\n";
-    exit(0);
+    throw "removefront: Can't remove from an empty list.";
   }
 
   if (head == tail) { // one item
@@ -267,8 +235,7 @@ void mylist::removefront()
 void mylist::removeback() // my Part
 {
   if(tail == NULL){
-    cout << "removefront: Can't remove from an empty list.\n";
-    exit(0);
+    throw"removefront: Can't remove from an empty list.";
   }
   if(head == tail){
     delete head;
@@ -291,8 +258,7 @@ void mylist::removeback() // my Part
 void mylist::remove(listnode *ptr) // my part
 {
   if (ptr == NULL) {
-    cout << "Remove: can't remove an NULL pointer.\n";
-    exit(0);
+    throw  "Remove: can't remove an NULL pointer.";
   }
   if(ptr == head){
     removefront();
@@ -303,6 +269,7 @@ void mylist::remove(listnode *ptr) // my part
     while(t != NULL){
       if(t = ptr){
         t->prev->next = t->next;
+        t->next->prev = t->prev;
         delete t;
         size--;
         break;
@@ -319,19 +286,11 @@ void mylist::remove(listnode *ptr) // my part
 //
 void mylist::removepos(const int & pos) // my part
 {
-  if(pos == 0){
-    listnode *t = head->next;
-    delete head;
-    head = t;
-    head->prev = NULL;
-    size--;
-  } else if(pos == size - 1){
-    listnode * t = tail->prev;
-    t->next = NULL;
-    delete tail;
-    tail = t;
-    size--;
-  } else if(pos < size - 1 && pos > 0){
+  if(pos == size - 1){
+    removeback();
+  } else if (pos == 0 && size != 0) {
+    removefront();
+  } else if (pos < size - 1 && pos > 0) {
     listnode * t = head;
     for(int i = 0 ; i < pos ; i++){
       t = t->next;
@@ -340,6 +299,8 @@ void mylist::removepos(const int & pos) // my part
     t->next->prev = t->prev;
     delete t;
     size--;
+  }else {
+    throw "The value of this position cannot be cleared";
   }
 }
 
@@ -371,10 +332,10 @@ listnode mylist::front() const
 listnode mylist::back() const // my part
 {
   if (tail == NULL) {
-    cout << "back: can't get back from an empty list.\n";
-    exit(0);
+   throw "back: can't get back from an empty list.";
+  } else {
+    return listnode(tail->s, tail->count);
   }
-  return listnode(tail->s, tail->count);
 }
 
 //
@@ -422,23 +383,7 @@ listnode *mylist::findmaxcount() // my part
 //
 void mylist::removemaxcount() // my part
 {
-  if(size == 0){
-    return;
-  } else if(head == tail){
-    delete head;
-    head = tail = NULL;
-    size = 0;
-  } else {
-    listnode *maxcount = head;
-    listnode *t = head;
-    while(t != NULL){
-      if(t->count > maxcount->count){
-        maxcount = t;
-      }
-      t = t->next;
-    }
-    remove(maxcount);
-  }
+  this->remove(this->findmaxcount());
 }
 
 //
