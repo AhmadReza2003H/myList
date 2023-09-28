@@ -93,8 +93,17 @@ void mylist::insertbefore(listnode *ptr, const string &s, const int & c)
 //
 void mylist::insertfront(const string &s, const int & c) // my part
 {
-  this->insertpos(0 , s , c);
-}
+  listnode *t = new listnode(s, c);
+  if (head == NULL) { 
+    head = t;
+    tail = t;
+    size++;
+  } else {
+    t->next = head;
+    head->prev = t; 
+    head = t;       
+    size++;        
+  }}
 
 
 //
@@ -104,7 +113,7 @@ void mylist::insertfront(const string &s, const int & c) // my part
 void mylist::insertafter(listnode *ptr, const string &s, const int & c) // my part
 {
   if (ptr == NULL) {
-    cout << "insertbefore: can't insert before a NULL pointer.\n";
+    throw "insertbefore: can't insert before a NULL pointer.";
   } else if (ptr == tail){
     insertback(s , c);
   } else {
@@ -127,15 +136,9 @@ void mylist::insertpos(const int &pos, const string &s, const int & c) // my par
   if(size != 0 && pos >= size){
     throw "out of size.";
   } else if(pos == 0){
-    if(size == 0){
-      head = new listnode(s  , c);
-      tail = head;
-    } else{
-      listnode *t = new listnode(s , c);
-      t->next = head;
-      head->prev = t;
-      head = t;
-    }
+    insertfront(s , c);
+  } else if(pos == size-1){
+    insertback(s , c);
   } else {
     listnode *position = head;
     for(int i = 0 ; i < pos ; i++){
@@ -146,8 +149,8 @@ void mylist::insertpos(const int &pos, const string &s, const int & c) // my par
     position->prev->next = t;
     t->prev = position->prev;
     position->prev = t;
+    size++;
   }
-  size++;
 }
 
 //
@@ -187,9 +190,8 @@ mylist & mylist::operator=(const mylist &l) // my part
 {
   listnode *t = head;
   while(t != NULL){
-    t->prev = t;
+    delete t;
     t = t->next;
-    delete t->prev;
   }
   head = tail = NULL;
   listnode* forward = l.head;
@@ -267,7 +269,7 @@ void mylist::remove(listnode *ptr) // my part
   } else{
     listnode *t = head;
     while(t != NULL){
-      if(t = ptr){
+      if(t == ptr){
         t->prev->next = t->next;
         t->next->prev = t->prev;
         delete t;
@@ -286,6 +288,7 @@ void mylist::remove(listnode *ptr) // my part
 //
 void mylist::removepos(const int & pos) // my part
 {
+  printf("%d",size);
   if(pos == size - 1){
     removeback();
   } else if (pos == 0 && size != 0) {
@@ -299,7 +302,7 @@ void mylist::removepos(const int & pos) // my part
     t->next->prev = t->prev;
     delete t;
     size--;
-  }else {
+  } else {
     throw "The value of this position cannot be cleared";
   }
 }
